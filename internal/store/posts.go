@@ -16,6 +16,7 @@ type Post struct {
 	Tags      []string  `json:"tags"`
 	CreatedAt string    `json:"created_at"`
 	UpdatedAt string    `json:"updated_at"`
+	Version   int       `json:"version"`
 	Comments  []Comment `json:"comments"`
 }
 
@@ -37,13 +38,13 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 }
 
 func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
-	query := `SELECT id, title, content, user_id, tags, created_at, updated_at FROM posts WHERE id = $1`
+	query := `SELECT id, title, content, user_id, tags, created_at, updated_at, version FROM posts WHERE id = $1`
 
 	row := s.db.QueryRowContext(ctx, query, id)
 
 	var post Post
 
-	if err := row.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, pq.Array(&post.Tags), &post.CreatedAt, &post.UpdatedAt); err != nil {
+	if err := row.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, pq.Array(&post.Tags), &post.CreatedAt, &post.UpdatedAt, &post.Version); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			return nil, ErrNotFound
@@ -76,21 +77,16 @@ func (s *PostStore) Delete(ctx context.Context, id int64) error {
 }
 
 func (s *PostStore) Update(ctx context.Context, post *Post) error {
-	query := `UPDATE posts SET content = $1, title = $2 WHERE id = $3`
+	query := `UPDATE posts SET content = $1, title = $2, version = version + 1 WHERE id = $3 AND version = $4 RETURNING version`
 
-	result, err := s.db.ExecContext(ctx, query, post.Content, post.Title, post.ID)
+	err := s.db.QueryRowContext(ctx, query, post.Content, post.Title, post.ID, post.Version).Scan(&post.Version)
 	if err != nil {
-		return err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrNotFound
+		default:
+			return err
+		}
 	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return ErrNotFound
-	}
-
 	return nil
 }
