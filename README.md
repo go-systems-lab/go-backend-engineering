@@ -1,4 +1,4 @@
-# Social Go
+# GO Backend Engineering
 
 ## Getting Started
 
