@@ -190,3 +190,60 @@ The Makefile:
 - Provides shortcuts for migration commands
 - Handles arguments for migration commands
 - Includes a seed command for database seeding
+
+# For Generating Swagger Docs
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+
+swag init -d cmd/api # whereever the main.go file is there
+
+go get -u github.com/swaggo/http-swagger
+
+http://localhost:8080/v1/swagger/index.html
+```
+
+### 8. API Documentation with Swagger
+
+This project uses [Swagger/OpenAPI](https://swagger.io/) for API documentation. Swagger provides interactive documentation that makes it easy to explore and test your API endpoints.
+
+#### Setup Swagger
+
+```bash
+# Install Swag CLI tool
+go install github.com/swaggo/swag/cmd/swag@latest
+
+# Install Swagger UI handler for your Go HTTP server
+go get -u github.com/swaggo/http-swagger
+```
+
+#### Generate Swagger Documentation
+
+```bash
+# Generate Swagger documentation
+swag init -d cmd/api
+```
+
+The `-d` flag specifies the directory containing your `main.go` file, docs folder is generated
+
+#### Configure Your API Server
+
+Import and configure the Swagger UI in your main.go:
+
+```go
+import (
+    httpSwagger "github.com/swaggo/http-swagger"
+)
+
+docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.apiURL)
+r.Get("/swagger/*", httpSwagger.Handler(
+	httpSwagger.URL(docsURL),
+))
+```
+
+#### Access Swagger UI
+
+Once your server is running, access the Swagger UI at:
+
+```
+http://localhost:8080/v1/swagger/index.html
+```
