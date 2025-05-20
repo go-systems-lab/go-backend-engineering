@@ -1,11 +1,10 @@
 package main
 
 import (
-	"log"
-
 	"github.com/kuluruvineeth/social-go/internal/db"
 	"github.com/kuluruvineeth/social-go/internal/env"
 	"github.com/kuluruvineeth/social-go/internal/store"
+	"go.uber.org/zap"
 )
 
 const version = "0.0.1"
@@ -21,12 +20,12 @@ const version = "0.0.1"
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-//	@BasePath					/v1
+// @BasePath					/v1
 //
-//	@securityDefinitions.apikey	ApiKeyAuth
-//	@in							header
-//	@name						Authorization
-//	@description				The token for the user
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description				The token for the user
 func main() {
 	cfg := config{
 		addr: env.GetString("ADDR", ":8080"),
@@ -40,22 +39,28 @@ func main() {
 		apiURL: env.GetString("API_URL", "localhost:8080"),
 	}
 
+	//Logger
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+
+	//Database
 	db, err := db.NewDB(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdletime)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	defer db.Close()
-	log.Println("Connected to the database")
+	logger.Info("Connected to the database")
 
 	store := store.NewStorage(db)
 	app := &application{
 		config: cfg,
 		store:  store,
+		logger: logger,
 	}
 
 	mux := app.mount()
 
-	log.Fatal(app.run(mux))
+	logger.Fatal(app.run(mux))
 
 }
