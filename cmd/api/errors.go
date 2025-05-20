@@ -19,3 +19,8 @@ func (app *application) badRequestError(w http.ResponseWriter, r *http.Request, 
 	log.Printf("bad request: %s path: %s error: %s", r.Method, r.URL.Path, err)
 	writeJSONError(w, http.StatusBadRequest, err.Error())
 }
+
+func (app *application) conflictError(w http.ResponseWriter, r *http.Request) {
+	log.Printf("conflict: %s path: %s error: %s", r.Method, r.URL.Path, "conflict")
+	writeJSONError(w, http.StatusConflict, "conflict")
+}
