@@ -19,7 +19,9 @@ seed:
 
 .PHONY: gen-docs
 gen-docs:
-	@swag init -g ./api/main.go -d cmd,internal && swag fmt
+	@echo "Generating Swagger documentation..."
+	@swag init --generalInfo cmd/api/main.go --output ./docs --parseDependency --parseInternal --quiet && swag fmt --dir ./docs
+	@echo "Swagger documentation generated in ./docs"
 
 %:
 	@:
