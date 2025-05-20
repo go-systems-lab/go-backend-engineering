@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/kuluruvineeth/social-go/internal/store"
 )
 
@@ -47,9 +50,21 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	token := uuid.New().String()
+
+	hash := sha256.Sum256([]byte(token))
+	hashToken := hex.EncodeToString(hash[:])
+
 	// store the user
-	if err := app.store.Users.CreateAndInvite(r.Context(), user, "token-123"); err != nil {
-		app.internalServerError(w, r, err)
+	if err := app.store.Users.CreateAndInvite(r.Context(), user, hashToken, app.config.mail.exp); err != nil {
+		switch err {
+		case store.ErrDuplicateEmail:
+			app.badRequestError(w, r, err)
+		case store.ErrDuplicateUsername:
+			app.badRequestError(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
 		return
 	}
 

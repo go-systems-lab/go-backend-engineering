@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/kuluruvineeth/social-go/internal/db"
 	"github.com/kuluruvineeth/social-go/internal/env"
 	"github.com/kuluruvineeth/social-go/internal/store"
@@ -37,6 +39,9 @@ func main() {
 		},
 		env:    env.GetString("ENV", "development"),
 		apiURL: env.GetString("API_URL", "localhost:8080"),
+		mail: mailConfig{
+			exp: time.Hour * 24 * 3, //3 days
+		},
 	}
 
 	//Logger
