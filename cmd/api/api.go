@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/kuluruvineeth/social-go/docs"
+	"github.com/kuluruvineeth/social-go/internal/mailer"
 	"github.com/kuluruvineeth/social-go/internal/store"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
@@ -17,6 +18,7 @@ type application struct {
 	config config
 	store  store.Storage
 	logger *zap.SugaredLogger
+	mailer mailer.Client
 }
 
 type dbConfig struct {
@@ -27,15 +29,22 @@ type dbConfig struct {
 }
 
 type mailConfig struct {
-	exp time.Duration
+	exp       time.Duration
+	sendGrid  sendGridConfig
+	fromEmail string
+}
+
+type sendGridConfig struct {
+	apiKey string
 }
 
 type config struct {
-	addr   string
-	db     dbConfig
-	env    string
-	apiURL string
-	mail   mailConfig
+	addr        string
+	db          dbConfig
+	env         string
+	apiURL      string
+	mail        mailConfig
+	frontendURL string
 }
 
 func (app *application) mount() http.Handler {

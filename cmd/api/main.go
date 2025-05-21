@@ -5,6 +5,7 @@ import (
 
 	"github.com/kuluruvineeth/social-go/internal/db"
 	"github.com/kuluruvineeth/social-go/internal/env"
+	"github.com/kuluruvineeth/social-go/internal/mailer"
 	"github.com/kuluruvineeth/social-go/internal/store"
 	"go.uber.org/zap"
 )
@@ -37,10 +38,15 @@ func main() {
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
 			maxIdletime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
-		env:    env.GetString("ENV", "development"),
-		apiURL: env.GetString("API_URL", "localhost:8080"),
+		env:         env.GetString("ENV", "development"),
+		apiURL:      env.GetString("API_URL", "localhost:8080"),
+		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:4000"),
 		mail: mailConfig{
-			exp: time.Hour * 24 * 3, //3 days
+			fromEmail: env.GetString("FROM_EMAIL", ""),
+			exp:       time.Hour * 24 * 3, //3 days
+			sendGrid: sendGridConfig{
+				apiKey: env.GetString("SENDGRID_API_KEY", ""),
+			},
 		},
 	}
 
@@ -58,10 +64,12 @@ func main() {
 	logger.Info("Connected to the database")
 
 	store := store.NewStorage(db)
+	mailer := mailer.NewSendGrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
 	app := &application{
 		config: cfg,
 		store:  store,
 		logger: logger,
+		mailer: mailer,
 	}
 
 	mux := app.mount()

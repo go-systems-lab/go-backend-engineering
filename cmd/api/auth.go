@@ -3,9 +3,11 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/kuluruvineeth/social-go/internal/mailer"
 	"github.com/kuluruvineeth/social-go/internal/store"
 )
 
@@ -76,6 +78,27 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	userWithToken := &UserWithToken{
 		User:  user,
 		Token: token,
+	}
+
+	activationURL := fmt.Sprintf("%s/confirm/%s", app.config.frontendURL, token)
+	isProdEnv := app.config.env == "production"
+	vars := struct {
+		Username      string
+		ActivationURL string
+	}{
+		Username:      user.Username,
+		ActivationURL: activationURL,
+	}
+
+	err := app.mailer.Send(mailer.UserInvitationTemplate, user.Username, user.Email, vars, !isProdEnv)
+	if err != nil {
+		app.logger.Errorw("failed to send user invitation email", "error", err)
+
+		if err := app.store.Users.Delete(r.Context(), user.ID); err != nil {
+			app.logger.Errorw("failed to delete user", "error", err)
+		}
+		app.internalServerError(w, r, err)
+		return
 	}
 
 	if err := app.jsonResponse(w, http.StatusCreated, userWithToken); err != nil {
