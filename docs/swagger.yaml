@@ -197,6 +197,11 @@ paths:
           description: ok
           schema:
             type: string
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
       summary: Healthcheck
       tags:
       - ops

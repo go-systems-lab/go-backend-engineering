@@ -68,6 +68,11 @@ const docTemplate = `{
         },
         "/health": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Healthcheck endpoint",
                 "produces": [
                     "application/json"
@@ -82,6 +87,10 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
                     }
                 }
             }

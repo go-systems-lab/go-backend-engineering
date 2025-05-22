@@ -60,6 +60,11 @@
         },
         "/health": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Healthcheck endpoint",
                 "produces": [
                     "application/json"
@@ -74,6 +79,10 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
                     }
                 }
             }
