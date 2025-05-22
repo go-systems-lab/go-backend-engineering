@@ -1,12 +1,56 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
+func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			app.unauthorizedError(w, r, fmt.Errorf("no authorization header provided"))
+			return
+		}
+
+		tokenParts := strings.Split(token, " ")
+		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+			app.unauthorizedError(w, r, fmt.Errorf("invalid authorization header"))
+			return
+		}
+
+		tokenString := tokenParts[1]
+		jwtToken, err := app.authenticator.ValidateToken(tokenString)
+		if err != nil {
+			app.unauthorizedError(w, r, err)
+			return
+		}
+
+		claims, _ := jwtToken.Claims.(jwt.MapClaims)
+		userID, err := strconv.ParseInt(fmt.Sprintf("%v", claims["sub"]), 10, 64)
+		if err != nil {
+			app.unauthorizedError(w, r, err)
+			return
+		}
+
+		ctx := r.Context()
+		user, err := app.store.Users.GetByID(ctx, userID)
+		if err != nil {
+			app.unauthorizedError(w, r, err)
+			return
+		}
+
+		ctx = context.WithValue(ctx, userCtxKey, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+
+	})
+}
 func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
