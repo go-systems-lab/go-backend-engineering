@@ -54,12 +54,12 @@ func (m *SendGridMailer) Send(templateFile, username, email string, data any, is
 			Enable: &isSandbox,
 		},
 	})
-
+	var retryErr error
 	for i := 0; i < MaxRetries; i++ {
-		response, err := m.client.Send(message)
-		if err != nil {
+		response, retryErr := m.client.Send(message)
+		if retryErr != nil {
 			log.Printf("Failed to send email to %v, attempt %d of %d", email, i+1, MaxRetries)
-			log.Printf("Error: %v", err.Error())
+			log.Printf("Error: %v", retryErr.Error())
 
 			// exponential backoff
 			time.Sleep(time.Duration(i+1) * time.Second)
@@ -70,5 +70,5 @@ func (m *SendGridMailer) Send(templateFile, username, email string, data any, is
 		return response.StatusCode, nil
 	}
 
-	return -1, fmt.Errorf("failed to send email to %v after %d attempts", email, MaxRetries)
+	return -1, fmt.Errorf("failed to send email to %v after %d attempts, error: %v", email, MaxRetries, retryErr)
 }
