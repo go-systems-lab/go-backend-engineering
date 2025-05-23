@@ -76,6 +76,73 @@ The Air configuration is in `.air.toml` with the following settings:
 - Builds the API server from `./cmd/api`
 - Outputs the binary to `./bin/main`
 
+### Debugging with VSCode and Delve
+
+To debug your Go application in VSCode while using Air for live reloading, you can integrate Delve, the Go debugger.
+
+**1. Install Delve:**
+
+If you haven't already, install Delve:
+```bash
+go install github.com/go-delve/delve/cmd/dlv@latest
+```
+
+**2. Configure Air for Delve:**
+
+Your `.air.toml` file needs to be configured to run your application with Delve. The key changes involve:
+- Modifying the `cmd` under `[build]` to compile with debug flags:
+  `cmd = "go build -gcflags="all=-N -l" -o ./bin/debug ./cmd/api"`
+- Setting `bin` to the debug binary:
+  `bin = "./bin/debug"`
+- Updating `full_bin` to execute Delve, make it listen on a port (e.g., 2345), and run your debug binary:
+  `full_bin = "dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient --continue --log exec ./bin/debug"`
+  (These changes should already be in your `.air.toml` from our previous steps).
+
+**3. Configure VSCode Launch:**
+
+Create a `launch.json` file inside a `.vscode` directory in your project root (if it doesn't exist) with the following configuration:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach to Delve",
+            "type": "go",
+            "request": "attach",
+            "mode": "remote",
+            "remotePath": "${workspaceFolder}",
+            "port": 2345,
+            "host": "127.0.0.1",
+            "showLog": true,
+            "apiVersion": 2,
+            "trace": "verbose"
+        }
+    ]
+}
+```
+This configuration tells VSCode to attach to the Delve debugger listening on `127.0.0.1:2345`.
+
+**4. Start Debugging:**
+
+1.  Run Air in your terminal from the project root:
+    ```bash
+    air
+    ```
+    Air will compile your application and start Delve. Look for a message like `API server listening at: 127.0.0.1:2345` in Air's output.
+2.  In VSCode, go to the "Run and Debug" view (usually the play button with a bug icon in the sidebar).
+3.  Select the "Attach to Delve" configuration from the dropdown menu.
+4.  Click the green play button (Start Debugging).
+
+VSCode should now attach to Delve, allowing you to set breakpoints, inspect variables, etc.
+
+**Important Note on Live Reloading:**
+
+When you save a file:
+- Air will detect the change, stop the current application (and Delve instance), rebuild, and restart the application with a *new* Delve instance.
+- Your VSCode debugger, which was attached to the old Delve instance, will disconnect.
+- **You will need to manually restart the "Attach to Delve" debugging session in VSCode** after Air has finished restarting your application. The `--continue` flag in the Delve command within `.air.toml` may help make this process smoother but does not guarantee automatic re-connection.
+
 ### 5. Environment Management with direnv
 
 This project uses [direnv](https://direnv.net/) to manage environment variables. direnv loads and unloads environment variables based on the current directory.
@@ -247,3 +314,22 @@ Once your server is running, access the Swagger UI at:
 ```
 http://localhost:8080/v1/swagger/index.html
 ```
+
+### Performance Testing with Autocannon
+
+[Autocannon](https://github.com/mcollina/autocannon) is a fast HTTP/1.1 benchmarking tool written in Node.js. You can use it to load test your API endpoints. `npx` is part of npm (Node Package Manager) and allows you to run Node.js packages without having to install them globally or in your project. Ensure you have Node.js and npm installed to use it.
+
+Here's an example command to test the `/v1/users/106` endpoint:
+
+```bash
+npx autocannon http://localhost:8080/v1/users/106 --connections 10 --duration 5 -h "Authorization: Bearer asas"
+```
+
+Let's break down this command:
+- `npx autocannon`: Executes autocannon.
+- `http://localhost:8080/v1/users/106`: The URL to test.
+- `--connections 10` (`-c 10`): The number of concurrent connections to use.
+- `--duration 5` (`-d 5`): The duration of the test in seconds.
+- `-h "Authorization: Bearer asas"`: Sets an HTTP header. In this case, it's an `Authorization` header for JWT authentication. Replace `asas` with a valid token.
+
+You can customize the URL, number of connections, duration, headers, and other parameters as needed. Refer to the [Autocannon documentation](https://github.com/mcollina/autocannon) for more options.

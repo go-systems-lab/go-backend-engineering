@@ -8,6 +8,8 @@ import (
 	"github.com/kuluruvineeth/social-go/internal/env"
 	"github.com/kuluruvineeth/social-go/internal/mailer"
 	"github.com/kuluruvineeth/social-go/internal/store"
+	"github.com/kuluruvineeth/social-go/internal/store/cache"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -64,11 +66,33 @@ func main() {
 				aud:    env.GetString("TOKEN_AUD", "social-go"),
 			},
 		},
+		redisCfg: redisConfig{
+			addr:    env.GetString("REDIS_ADDR", "localhost:6379"),
+			db:      env.GetInt("REDIS_DB", 0),
+			pw:      env.GetString("REDIS_PW", ""),
+			enabled: env.GetBool("REDIS_ENABLED", false),
+		},
 	}
 
 	//Logger
-	logger := zap.Must(zap.NewProduction()).Sugar()
+	var logger *zap.SugaredLogger
+	if cfg.env == "development" {
+		// Use development logger for better debugging
+		zapLogger := zap.Must(zap.NewDevelopment())
+		logger = zapLogger.Sugar()
+	} else {
+		// Use production logger for production
+		logger = zap.Must(zap.NewProduction()).Sugar()
+	}
 	defer logger.Sync()
+
+	// Log the configuration for debugging
+	logger.Infow("Starting server",
+		"env", cfg.env,
+		"addr", cfg.addr,
+		"basic_auth_user", cfg.auth.basic.user,
+		"redis_enabled", cfg.redisCfg.enabled,
+	)
 
 	//Database
 	db, err := db.NewDB(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdletime)
@@ -79,7 +103,17 @@ func main() {
 	defer db.Close()
 	logger.Info("Connected to the database")
 
+	//cache
+	var rdb *redis.Client
+	if cfg.redisCfg.enabled {
+		rdb = cache.NewRedisClient(cfg.redisCfg.addr, cfg.redisCfg.pw, cfg.redisCfg.db)
+		logger.Info("Connected to the redis")
+
+		defer rdb.Close()
+	}
+
 	store := store.NewStorage(db)
+	cacheStorage := cache.NewRedisStorage(rdb)
 	mailer := mailer.NewSendGrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
 	// Uncomment this to use Mailtrap
 	// mailtrap, err := mailer.NewMailTrapClient(cfg.mail.mailTrap.apiKey, cfg.mail.fromEmail)
@@ -95,6 +129,7 @@ func main() {
 		logger:        logger,
 		mailer:        mailer,
 		authenticator: jwtAuthenticator,
+		cache:         cacheStorage,
 	}
 
 	mux := app.mount()
