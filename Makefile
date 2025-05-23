@@ -9,9 +9,25 @@ migration:
 migrate-up:
 	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) up
 
+.PHONY: migrate-force
+migrate-force:
+	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) force $(filter-out $@,$(MAKECMDGOALS))
+
 .PHONY: migrate-down
 migrate-down:
 	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) down $(filter-out $@,$(MAKECMDGOALS))
+
+.PHONY: migrate-version
+migrate-version:
+	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) version
+
+.PHONY: migrate-goto
+migrate-goto:
+	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) goto $(filter-out $@,$(MAKECMDGOALS))
+
+.PHONY: migrate-drop
+migrate-drop:
+	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) drop
 
 .PHONY: seed
 seed:
