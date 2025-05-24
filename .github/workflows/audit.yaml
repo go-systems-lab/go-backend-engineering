@@ -33,5 +33,5 @@ jobs:
         run: staticcheck ./...
 
       - name: Run Tests
-        run: go test -race ./..
+        run: go test -race ./...
         
