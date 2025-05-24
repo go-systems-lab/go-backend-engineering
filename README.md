@@ -333,3 +333,9 @@ Let's break down this command:
 - `-h "Authorization: Bearer asas"`: Sets an HTTP header. In this case, it's an `Authorization` header for JWT authentication. Replace `asas` with a valid token.
 
 You can customize the URL, number of connections, duration, headers, and other parameters as needed. Refer to the [Autocannon documentation](https://github.com/mcollina/autocannon) for more options.
+
+### Testing rate limiter
+
+```bash
+npx autocannon -r 4000 -d 2 -c 10 --renderStatusCodes http://localhost:8080/v1/health
+```

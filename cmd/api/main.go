@@ -7,6 +7,7 @@ import (
 	"github.com/kuluruvineeth/social-go/internal/db"
 	"github.com/kuluruvineeth/social-go/internal/env"
 	"github.com/kuluruvineeth/social-go/internal/mailer"
+	"github.com/kuluruvineeth/social-go/internal/ratelimiter"
 	"github.com/kuluruvineeth/social-go/internal/store"
 	"github.com/kuluruvineeth/social-go/internal/store/cache"
 	"github.com/redis/go-redis/v9"
@@ -72,6 +73,11 @@ func main() {
 			pw:      env.GetString("REDIS_PW", ""),
 			enabled: env.GetBool("REDIS_ENABLED", false),
 		},
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.GetInt("RATE_LIMITER_REQUESTS_PER_TIME_FRAME", 20),
+			TimeFrame:            time.Second * 5,
+			Enabled:              env.GetBool("RATE_LIMITER_ENABLED", false),
+		},
 	}
 
 	//Logger
@@ -112,6 +118,12 @@ func main() {
 		defer rdb.Close()
 	}
 
+	//rate limiter
+	rateLimiter := ratelimiter.NewFixedWindowRateLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	store := store.NewStorage(db)
 	cacheStorage := cache.NewRedisStorage(rdb)
 	mailer := mailer.NewSendGrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
@@ -130,6 +142,7 @@ func main() {
 		mailer:        mailer,
 		authenticator: jwtAuthenticator,
 		cache:         cacheStorage,
+		rateLimiter:   rateLimiter,
 	}
 
 	mux := app.mount()
