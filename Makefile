@@ -39,5 +39,9 @@ gen-docs:
 	@swag init --generalInfo cmd/api/main.go --output ./docs --parseDependency --parseInternal --quiet && swag fmt --dir ./docs
 	@echo "Swagger documentation generated in ./docs"
 
+.PHONY: test
+test:
+	@go test -v ./...
+
 %:
 	@:

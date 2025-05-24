@@ -66,7 +66,7 @@ func (m *SendGridMailer) Send(templateFile, username, email string, data any, is
 			continue
 		}
 
-		log.Printf("Email sent with status code %v", email, response.StatusCode)
+		log.Printf("Email sent with status code %v for %v", response.StatusCode, email)
 		return response.StatusCode, nil
 	}
 
