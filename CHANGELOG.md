@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/go-systems-lab/go-backend-engineering/compare/v1.0.0...v1.1.0) (2025-05-24)
+
+
+### Features
+
+* update api version automatically ([932578d](https://github.com/go-systems-lab/go-backend-engineering/commit/932578dbd5782e5d354eb925ce229061b7b001d8))
+
 ## 1.0.0 (2025-05-24)
 
 
