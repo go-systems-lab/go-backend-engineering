@@ -127,10 +127,10 @@ func (app *application) getUser(ctx context.Context, id int64) (*store.User, err
 		return app.store.Users.GetByID(ctx, id)
 	}
 
-	user, err := app.cache.Users.Get(ctx, id)
+	user, _ := app.cache.Users.Get(ctx, id)
 
 	if user == nil {
-		user, err = app.store.Users.GetByID(ctx, id)
+		user, err := app.store.Users.GetByID(ctx, id)
 		if err != nil {
 			return nil, err
 		}
