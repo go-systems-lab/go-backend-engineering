@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/go-systems-lab/go-backend-engineering/compare/v1.1.0...v1.2.0) (2025-05-24)
+
+
+### Features
+
+* add dockerfile ([e62beb6](https://github.com/go-systems-lab/go-backend-engineering/commit/e62beb678804665e00247ba4b98b9b028b55d1d1))
+
+
+### Bug Fixes
+
+* env ADDR variable name ([8a1ece6](https://github.com/go-systems-lab/go-backend-engineering/commit/8a1ece6f17c975200b051520752ee2870e6166ad))
+
 ## [1.1.0](https://github.com/go-systems-lab/go-backend-engineering/compare/v1.0.0...v1.1.0) (2025-05-24)
 
 
