@@ -339,3 +339,103 @@ You can customize the URL, number of connections, duration, headers, and other p
 ```bash
 npx autocannon -r 4000 -d 2 -c 10 --renderStatusCodes http://localhost:8080/v1/health
 ```
+
+## Commit Message Guidelines
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) to automatically generate changelogs and determine version bumps when the release workflow is triggered.
+
+### Conventional Commit Format
+
+Each commit message should follow this structure:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Commit Types
+
+| Type | Description | Version Bump | Changelog Section |
+|------|-------------|--------------|-------------------|
+| `feat` | A new feature | Minor | Features |
+| `fix` | A bug fix | Patch | Bug Fixes |
+| `docs` | Documentation only changes | Patch | Documentation |
+| `refactor` | Code change that neither fixes a bug nor adds a feature | Patch | Code Refactoring |
+| `perf` | Performance improvements | Patch | Performance Improvements |
+| `test` | Adding missing tests or correcting existing tests | Patch | Tests |
+| `build` | Changes that affect the build system or external dependencies | Patch | Build System |
+| `ci` | Changes to CI configuration files and scripts | Patch | Continuous Integration |
+| `chore` | Other changes that don't modify src or test files | Patch | Miscellaneous |
+| `style` | Changes that do not affect the meaning of the code | Patch | Styles |
+
+### Breaking Changes
+
+To indicate a breaking change, add `!` after the type or add `BREAKING CHANGE:` in the footer:
+
+```bash
+feat!: remove deprecated API endpoint
+
+BREAKING CHANGE: The /v1/old-endpoint has been removed. Use /v1/new-endpoint instead.
+```
+
+This will trigger a **major** version bump.
+
+### Examples
+
+#### Good commit messages:
+```bash
+feat: add user authentication middleware
+fix: resolve database connection timeout issue
+docs: update API documentation for user endpoints
+refactor: improve error handling in user service
+perf: optimize database queries for user feed
+test: add unit tests for JWT token validation
+build: update Go version to 1.21
+ci: add automated security scanning
+chore: update dependencies to latest versions
+feat(auth): implement JWT token refresh mechanism
+fix(api): handle edge case in pagination logic
+```
+
+#### Poor commit messages (avoid these):
+```bash
+- update secret name
+- comment tests for now
+- fix stuff
+- working on features
+- WIP
+- minor changes
+```
+
+### How It Works with Release Workflow
+
+When you push commits to the `main` branch, the release workflow (`.github/workflows/release.yaml`) will:
+
+1. **Parse commit messages** since the last release
+2. **Determine version bump** based on commit types:
+   - `feat` → Minor version bump (e.g., 1.0.0 → 1.1.0)
+   - `fix`, `docs`, `refactor`, etc. → Patch version bump (e.g., 1.0.0 → 1.0.1)
+   - Breaking changes → Major version bump (e.g., 1.0.0 → 2.0.0)
+3. **Generate changelog** by grouping commits by type
+4. **Create a release PR** with the changelog and version bump
+5. **Create a GitHub release** when the release PR is merged
+
+### Best Practices
+
+1. **Write descriptive messages**: Explain what the change does, not how it does it
+2. **Use present tense**: "add feature" not "added feature"
+3. **Keep the first line under 50 characters** when possible
+4. **Use the body** to explain complex changes
+5. **Reference issues**: Include issue numbers in the footer (e.g., `Closes #123`)
+
+### Release Workflow Integration
+
+The release workflow will only create releases when it finds commits with these types since the last release. Commits that don't follow the conventional format may not be included in the changelog or may cause parsing errors.
+
+To manually trigger a release or fix commit parsing issues, you can:
+1. Run the workflow manually from the GitHub Actions tab
+2. Edit the generated release PR to add commit overrides if needed
+3. Ensure future commits follow the conventional format
