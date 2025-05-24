@@ -45,7 +45,7 @@ func main() {
 			maxIdletime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
 		env:         env.GetString("ENV", "development"),
-		apiURL:      env.GetString("API_URL", "localhost:8080"),
+		apiURL:      env.GetString("ADDR", "0.0.0.0:8080"),
 		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:4000"),
 		mail: mailConfig{
 			fromEmail: env.GetString("FROM_EMAIL", ""),
